@@ -53,6 +53,7 @@ reports = "no"
 [project.optional-dependencies]
 dev = [
   "commitizen>=2.32.0",
+  "pytest-cov>=4.0.0",
 ]
 
 [tool.commitizen]
