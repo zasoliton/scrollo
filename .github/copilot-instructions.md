@@ -3,7 +3,7 @@
 This repository requires the following coding standards. Please follow them on every contribution.
 
 ## Language Version
-- Python 3.13 or newer is required.
+- Python 3.11 or newer is required.
 
 ## Type Hinting (Required)
 - All functions and methods must have complete type annotations for parameters and return types.

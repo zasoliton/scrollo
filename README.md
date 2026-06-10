@@ -2,6 +2,8 @@
 
 `Market Matrix Scroller` is a Raspberry Pi friendly fullscreen dashboard that borrows the feel of a HUB75 ticker wall while targeting a 1080p HDMI display instead of an LED matrix.
 
+[![coverage](https://codecov.io/gh/OWNER/REPO/branch/main/graph/badge.svg?token=REPLACE_TOKEN)](https://codecov.io/gh/OWNER/REPO)
+
 It includes:
 
 - A `pygame` renderer for fullscreen stock and headline scrolling.
