@@ -1,0 +1,49 @@
+{
+  "feeds": [
+    {
+      "enabled": true,
+      "name": "CNBC Top News",
+      "url": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114"
+    },
+    {
+      "enabled": true,
+      "name": "MarketWatch",
+      "url": "https://feeds.marketwatch.com/marketwatch/topstories/"
+    },
+    {
+      "enabled": true,
+      "name": "Investing.com Stock Market News",
+      "url": "https://www.investing.com/rss/news_25.rss"
+    }
+  ],
+  "font_name": "dejavusansmono",
+  "fullscreen": true,
+  "headline_separator": "   \u2022   ",
+  "news_items_per_feed": 8,
+  "news_refresh_seconds": 300,
+  "screen_height": 1080,
+  "screen_width": 1920,
+  "scroll_speed": 260.0,
+  "stock_refresh_seconds": 120,
+  "stocks": [
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "SPY",
+    "TSLA"
+  ],
+  "target_fps": 60,
+  "theme": {
+    "accent_color": "#00d4ff",
+    "background_color": "#050505",
+    "muted_color": "#7d8896",
+    "negative_color": "#ff5a76",
+    "panel_color": "#111111",
+    "positive_color": "#52d273",
+    "primary_text_color": "#ff5c5c",
+    "secondary_text_color": "#ffd166"
+  },
+  "title": "Market Matrix",
+  "web_host": "0.0.0.0",
+  "web_port": 8787
+}

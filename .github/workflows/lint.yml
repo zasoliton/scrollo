@@ -1,0 +1,31 @@
+name: Lint and Test
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      - name: Install tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pylint mccabe pytest pre-commit commitizen
+      - name: Run pre-commit (format & lint)
+        run: |
+          pre-commit run --all-files || true
+      - name: Ruff check
+        run: ruff check .
+      - name: Pylint
+        run: pylint src
+      - name: McCabe complexity check
+        run: |
+          for f in $(find src -name '*.py'); do python -m mccabe -m 10 "$f" || true; done
+      - name: Run tests
+        run: pytest -q

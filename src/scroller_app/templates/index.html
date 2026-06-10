@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Market Matrix Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Raspberry Pi scroller control</p>
+          <h1>Market Matrix Admin</h1>
+          <p class="lede">
+            Configure stocks, RSS feeds, and the LED-style display theme without touching code.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <button class="ghost" id="refreshAllButton" type="button">Refresh Data</button>
+          <button id="saveButton" type="button">Save Settings</button>
+        </div>
+      </header>
+
+      <main class="grid">
+        <section class="panel">
+          <h2>Display</h2>
+          <label>
+            <span>Board title</span>
+            <input id="title" type="text" />
+          </label>
+          <label class="checkbox">
+            <input id="fullscreen" type="checkbox" />
+            <span>Run renderer in fullscreen mode</span>
+          </label>
+          <div class="two-up">
+            <label>
+              <span>Screen width</span>
+              <input id="screenWidth" type="number" min="640" step="1" />
+            </label>
+            <label>
+              <span>Screen height</span>
+              <input id="screenHeight" type="number" min="360" step="1" />
+            </label>
+          </div>
+          <div class="two-up">
+            <label>
+              <span>Target FPS</span>
+              <input id="targetFps" type="number" min="15" step="1" />
+            </label>
+            <label>
+              <span>Scroll speed</span>
+              <input id="scrollSpeed" type="number" min="10" step="10" />
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Market Symbols</h2>
+          <label>
+            <span>Symbols</span>
+            <textarea id="stocks" rows="6" placeholder="AAPL, MSFT, NVDA"></textarea>
+          </label>
+          <p class="hint">Comma separated or one per line.</p>
+        </section>
+
+        <section class="panel panel-wide">
+          <div class="section-heading">
+            <h2>RSS Feeds</h2>
+            <button class="ghost" id="addFeedButton" type="button">Add Feed</button>
+          </div>
+          <div id="feedsList" class="feed-list"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Refresh</h2>
+          <div class="two-up">
+            <label>
+              <span>Stock refresh (sec)</span>
+              <input id="stockRefreshSeconds" type="number" min="15" step="15" />
+            </label>
+            <label>
+              <span>News refresh (sec)</span>
+              <input id="newsRefreshSeconds" type="number" min="30" step="30" />
+            </label>
+          </div>
+          <label>
+            <span>News items per feed</span>
+            <input id="newsItemsPerFeed" type="number" min="1" step="1" />
+          </label>
+          <label>
+            <span>Headline separator</span>
+            <input id="headlineSeparator" type="text" />
+          </label>
+        </section>
+
+        <section class="panel">
+          <h2>Theme</h2>
+          <div class="swatches">
+            <label><span>Background</span><input id="backgroundColor" type="color" /></label>
+            <label><span>Panel</span><input id="panelColor" type="color" /></label>
+            <label><span>Primary</span><input id="primaryTextColor" type="color" /></label>
+            <label><span>Secondary</span><input id="secondaryTextColor" type="color" /></label>
+            <label><span>Accent</span><input id="accentColor" type="color" /></label>
+            <label><span>Positive</span><input id="positiveColor" type="color" /></label>
+            <label><span>Negative</span><input id="negativeColor" type="color" /></label>
+            <label><span>Muted</span><input id="mutedColor" type="color" /></label>
+          </div>
+        </section>
+
+        <section class="panel panel-wide">
+          <div class="section-heading">
+            <h2>Live Status</h2>
+            <button class="ghost" id="refreshStatusButton" type="button">Reload Status</button>
+          </div>
+          <div class="status-grid">
+            <div class="status-card">
+              <p class="status-label">Last stock refresh</p>
+              <p id="lastStockRefresh" class="status-value">-</p>
+            </div>
+            <div class="status-card">
+              <p class="status-label">Last news refresh</p>
+              <p id="lastNewsRefresh" class="status-value">-</p>
+            </div>
+            <div class="status-card">
+              <p class="status-label">Quotes loaded</p>
+              <p id="quoteCount" class="status-value">0</p>
+            </div>
+            <div class="status-card">
+              <p class="status-label">Headlines loaded</p>
+              <p id="headlineCount" class="status-value">0</p>
+            </div>
+          </div>
+          <div class="status-columns">
+            <div>
+              <h3>Recent Headlines</h3>
+              <ul id="headlinesPreview" class="preview-list"></ul>
+            </div>
+            <div>
+              <h3>Latest Quotes</h3>
+              <ul id="quotesPreview" class="preview-list"></ul>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <template id="feedTemplate">
+      <div class="feed-row">
+        <label>
+          <span>Name</span>
+          <input data-feed="name" type="text" />
+        </label>
+        <label>
+          <span>URL</span>
+          <input data-feed="url" type="url" />
+        </label>
+        <label class="checkbox">
+          <input data-feed="enabled" type="checkbox" />
+          <span>Enabled</span>
+        </label>
+        <button class="danger" data-feed-action="remove" type="button">Remove</button>
+      </div>
+    </template>
+
+    <script>
+      const initialConfig = {{ config_json | safe }};
+
+      const feedTemplate = document.getElementById("feedTemplate");
+      const feedsList = document.getElementById("feedsList");
+      const saveButton = document.getElementById("saveButton");
+      const refreshAllButton = document.getElementById("refreshAllButton");
+      const refreshStatusButton = document.getElementById("refreshStatusButton");
+      const addFeedButton = document.getElementById("addFeedButton");
+
+      function createFeedRow(feed = { name: "", url: "", enabled: true }) {
+        const fragment = feedTemplate.content.cloneNode(true);
+        const row = fragment.querySelector(".feed-row");
+        row.querySelector('[data-feed="name"]').value = feed.name || "";
+        row.querySelector('[data-feed="url"]').value = feed.url || "";
+        row.querySelector('[data-feed="enabled"]').checked = Boolean(feed.enabled);
+        row.querySelector('[data-feed-action="remove"]').addEventListener("click", () => row.remove());
+        feedsList.appendChild(fragment);
+      }
+
+      function setFormValues(config) {
+        document.getElementById("title").value = config.title;
+        document.getElementById("fullscreen").checked = Boolean(config.fullscreen);
+        document.getElementById("screenWidth").value = config.screen_width;
+        document.getElementById("screenHeight").value = config.screen_height;
+        document.getElementById("targetFps").value = config.target_fps;
+        document.getElementById("scrollSpeed").value = config.scroll_speed;
+        document.getElementById("stocks").value = config.stocks.join(", ");
+        document.getElementById("stockRefreshSeconds").value = config.stock_refresh_seconds;
+        document.getElementById("newsRefreshSeconds").value = config.news_refresh_seconds;
+        document.getElementById("newsItemsPerFeed").value = config.news_items_per_feed;
+        document.getElementById("headlineSeparator").value = config.headline_separator;
+
+        document.getElementById("backgroundColor").value = config.theme.background_color;
+        document.getElementById("panelColor").value = config.theme.panel_color;
+        document.getElementById("primaryTextColor").value = config.theme.primary_text_color;
+        document.getElementById("secondaryTextColor").value = config.theme.secondary_text_color;
+        document.getElementById("accentColor").value = config.theme.accent_color;
+        document.getElementById("positiveColor").value = config.theme.positive_color;
+        document.getElementById("negativeColor").value = config.theme.negative_color;
+        document.getElementById("mutedColor").value = config.theme.muted_color;
+
+        feedsList.innerHTML = "";
+        config.feeds.forEach(createFeedRow);
+      }
+
+      function collectConfig() {
+        const feedRows = Array.from(document.querySelectorAll(".feed-row"));
+        return {
+          title: document.getElementById("title").value,
+          fullscreen: document.getElementById("fullscreen").checked,
+          screen_width: Number(document.getElementById("screenWidth").value),
+          screen_height: Number(document.getElementById("screenHeight").value),
+          target_fps: Number(document.getElementById("targetFps").value),
+          scroll_speed: Number(document.getElementById("scrollSpeed").value),
+          stocks: document.getElementById("stocks").value,
+          stock_refresh_seconds: Number(document.getElementById("stockRefreshSeconds").value),
+          news_refresh_seconds: Number(document.getElementById("newsRefreshSeconds").value),
+          news_items_per_feed: Number(document.getElementById("newsItemsPerFeed").value),
+          headline_separator: document.getElementById("headlineSeparator").value,
+          feeds: feedRows.map((row) => ({
+            name: row.querySelector('[data-feed="name"]').value,
+            url: row.querySelector('[data-feed="url"]').value,
+            enabled: row.querySelector('[data-feed="enabled"]').checked,
+          })),
+          theme: {
+            background_color: document.getElementById("backgroundColor").value,
+            panel_color: document.getElementById("panelColor").value,
+            primary_text_color: document.getElementById("primaryTextColor").value,
+            secondary_text_color: document.getElementById("secondaryTextColor").value,
+            accent_color: document.getElementById("accentColor").value,
+            positive_color: document.getElementById("positiveColor").value,
+            negative_color: document.getElementById("negativeColor").value,
+            muted_color: document.getElementById("mutedColor").value,
+          },
+        };
+      }
+
+      async function saveConfig() {
+        saveButton.disabled = true;
+        try {
+          const response = await fetch("/api/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(collectConfig()),
+          });
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload.detail || "Unable to save config");
+          }
+          setFormValues(payload.config);
+          await loadStatus();
+        } catch (error) {
+          window.alert(error.message);
+        } finally {
+          saveButton.disabled = false;
+        }
+      }
+
+      async function triggerRefresh(kind = "all") {
+        const response = await fetch("/api/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind }),
+        });
+        if (!response.ok) {
+          const payload = await response.json();
+          throw new Error(payload.detail || "Unable to refresh data");
+        }
+      }
+
+      function renderPreviewList(elementId, items, formatter) {
+        const container = document.getElementById(elementId);
+        container.innerHTML = "";
+        items.slice(0, 8).forEach((item) => {
+          const li = document.createElement("li");
+          li.textContent = formatter(item);
+          container.appendChild(li);
+        });
+      }
+
+      async function loadStatus() {
+        const response = await fetch("/api/state");
+        const payload = await response.json();
+
+        document.getElementById("lastStockRefresh").textContent = payload.last_stock_refresh || "-";
+        document.getElementById("lastNewsRefresh").textContent = payload.last_news_refresh || "-";
+        document.getElementById("quoteCount").textContent = payload.quotes.length;
+        document.getElementById("headlineCount").textContent = payload.headlines.length;
+
+        renderPreviewList("headlinesPreview", payload.headlines, (item) => `[${item.source}] ${item.title}`);
+        renderPreviewList(
+          "quotesPreview",
+          payload.quotes,
+          (item) => `${item.symbol}: ${item.price ?? "--"} (${item.change_percent ?? "--"}%)`
+        );
+      }
+
+      addFeedButton.addEventListener("click", () => createFeedRow());
+      saveButton.addEventListener("click", saveConfig);
+      refreshStatusButton.addEventListener("click", loadStatus);
+      refreshAllButton.addEventListener("click", async () => {
+        refreshAllButton.disabled = true;
+        try {
+          await triggerRefresh("all");
+          await loadStatus();
+        } catch (error) {
+          window.alert(error.message);
+        } finally {
+          refreshAllButton.disabled = false;
+        }
+      });
+
+      setFormValues(initialConfig);
+      loadStatus();
+      window.setInterval(loadStatus, 15000);
+    </script>
+  </body>
+</html>

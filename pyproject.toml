@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "market-matrix-scroller"
+version = "0.1.0"
+description = "Fullscreen stock and RSS scroller for Raspberry Pi displays"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "fastapi>=0.115.0",
+  "feedparser>=6.0.11",
+  "pygame>=2.5.2",
+  "requests>=2.32.0",
+  "uvicorn>=0.30.0",
+  "jinja2>=3.1.4",
+]
+
+[project.scripts]
+market-matrix-scroller = "scroller_app.app:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+scroller_app = ["templates/*.html", "static/*.css"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "C4", "SIM", "UP", "ARG"]
+extend-ignore = ["TCH", "PTH", "FA102"]
+
+[tool.pylint]
+ignore = "venv,.venv,build,dist"
+max-line-length = 88
+max-args = 10
+max-parents = 7
+max-returns = 6
+max-branches = 12
+max-statements = 200
+max-complexity = 10
+output-format = "text"
+reports = "no"
+
+[project.optional-dependencies]
+dev = [
+  "commitizen>=2.32.0",
+]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+tag_format = "v$version"
