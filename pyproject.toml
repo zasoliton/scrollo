@@ -7,7 +7,7 @@ name = "market-matrix-scroller"
 version = "0.1.0"
 description = "Fullscreen stock and RSS scroller for Raspberry Pi displays"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115.0",
   "feedparser>=6.0.11",
